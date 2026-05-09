@@ -1,0 +1,11 @@
+streamlit
+pandas
+plotly
+wordcloud
+matplotlib
+pymorphy3
+torch
+transformers
+datasets
+scikit-learn
+streamlit-aggrid
