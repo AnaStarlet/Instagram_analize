@@ -3,9 +3,8 @@ pandas
 plotly
 wordcloud
 matplotlib
-pymorphy3
-torch
 transformers
+torch
 datasets
-scikit-learn
-streamlit-aggrid
+pymorphy3
+pymorphy3-dicts-ru
