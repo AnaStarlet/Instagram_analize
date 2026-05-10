@@ -27,3 +27,5 @@
 ```bash
 git clone https://github.com/AnaStarlet/Instagram_analize.git
 cd Instagram_analize
+pip install -r requirements.txt
+streamlit run app.py
