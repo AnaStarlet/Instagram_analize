@@ -84,6 +84,8 @@ h1 {
     border: 1px solid #FFD3E0 !important;
 
     background: white !important;
+    
+    color: black !important;
 }
 
 .stTextInput input:focus {
@@ -152,62 +154,17 @@ div[role="radiogroup"] {
     gap: 10px;
 }
 
-.metric-card {
-
-    border-radius: 22px;
-
-    padding: 24px;
-
-    transition: 0.25s;
-
-    background: linear-gradient(
-        145deg,
-        white,
-        var(--soft-pink)
-    );
-
-    border: 1px solid var(--border-light);
-
-    box-shadow: 0 6px 20px rgba(231,84,128,0.05);
-}
-
-.metric-card:hover {
-
-    transform: translateY(-3px);
-}
-
-.filter-box {
-
-    border-radius: 24px;
-
-    padding: 22px;
-
-    margin-bottom: 20px;
-
-    background: linear-gradient(
-        145deg,
-        white,
-        var(--soft-pink)
-    );
-
-    border: 1px solid var(--border-light);
+/* ЭТАЛОННЫЕ БЕЛЫЕ КВАДРАТЫ ДЛЯ СВЕТЛОЙ ТЕМЫ */
+div[data-testid="stMetric"], .filter-box, .insight-box, .metric-card {
+    background: linear-gradient(145deg, white, #FFF3F7) !important;
+    border: 1px solid #FFD9E5 !important;
+    border-radius: 18px !important;
+    padding: 18px !important;
+    box-shadow: 0 6px 20px rgba(231,84,128,0.06) !important;
 }
 
 .insight-box {
-
-    border-radius: 18px;
-
-    padding: 18px;
-
-    margin-bottom: 12px;
-
-    background: linear-gradient(
-        145deg,
-        #FFF0F5,
-        #FFE4EC
-    );
-
-    border-left: 4px solid var(--accent);
+    border-left: 5px solid var(--accent) !important;
 }
 
 [data-testid="stDataFrame"] {
@@ -268,55 +225,26 @@ tbody tr:hover {
     border-radius: 14px 14px 0 0 !important;
 }
 
-div[data-testid="stMetric"] {
-
-    background: linear-gradient(
-        145deg,
-        white,
-        #FFF3F7
-    );
-
-    padding: 18px;
-
-    border-radius: 18px;
-
-    border: 1px solid #FFD9E5;
-
-    box-shadow: 0 6px 20px rgba(231,84,128,0.06);
-}
-
 div[data-testid="stMetricLabel"] {
-
     color: #A63E68 !important;
 }
 
 div[data-testid="stMetricValue"] {
-
     color: #C94F7C !important;
 }
 
-.progress-container {
-
-    width: 100%;
-
-    background: #FFE4EC;
-
-    border-radius: 999px;
-
-    height: 12px;
-}
-
-.progress-bar {
-
-    height: 12px;
-
-    border-radius: 999px;
-
-    background: linear-gradient(
-        90deg,
-        #E75480,
-        #FF9EB8
-    );
+/* --- ТОЛЬКО ДЛЯ ТЕМНОЙ ТЕМЫ: ЯРКО-РОЗОВЫЕ КВАДРАТЫ --- */
+@media (prefers-color-scheme: dark) {
+    div[data-testid="stMetric"], .filter-box, .insight-box, .metric-card {
+        background: linear-gradient(145deg, #E75480, #C94F7C) !important; /* Яркий розовый, не бордовый */
+        border: 1px solid #FF8FB1 !important;
+    }
+    div[data-testid="stMetricLabel"] > div > p {
+        color: white !important;
+    }
+    div[data-testid="stMetricValue"] > div {
+        color: white !important;
+    }
 }
 
 </style>
