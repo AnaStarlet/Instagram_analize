@@ -1,0 +1,9 @@
+@echo off
+echo Привет! Сейчас я настрою окружение и запущу проект...
+python -m venv env
+call env\Scripts\activate
+echo Устанавливаю библиотеки (это может занять пару минут)...
+pip install -r requirements.txt
+echo Запускаю веб-интерфейс...
+streamlit run app.py
+pause
