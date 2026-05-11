@@ -9,7 +9,8 @@ from analyzer import (
     analyze_sentiment,
     calculate_priority_score,
     classify_theme,
-    generate_insights
+    generate_insights,
+    get_lemmas
 )
 
 st.set_page_config(
@@ -154,7 +155,6 @@ div[role="radiogroup"] {
     gap: 10px;
 }
 
-/* ЭТАЛОННЫЕ БЕЛЫЕ КВАДРАТЫ ДЛЯ СВЕТЛОЙ ТЕМЫ */
 div[data-testid="stMetric"], .filter-box, .insight-box, .metric-card {
     background: linear-gradient(145deg, white, #FFF3F7) !important;
     border: 1px solid #FFD9E5 !important;
@@ -233,10 +233,9 @@ div[data-testid="stMetricValue"] {
     color: #C94F7C !important;
 }
 
-/* --- ТОЛЬКО ДЛЯ ТЕМНОЙ ТЕМЫ: ЯРКО-РОЗОВЫЕ КВАДРАТЫ --- */
 @media (prefers-color-scheme: dark) {
     div[data-testid="stMetric"], .filter-box, .insight-box, .metric-card {
-        background: linear-gradient(145deg, #E75480, #C94F7C) !important; /* Яркий розовый, не бордовый */
+        background: linear-gradient(145deg, #E75480, #C94F7C) !important;
         border: 1px solid #FF8FB1 !important;
     }
     div[data-testid="stMetricLabel"] > div > p {
@@ -254,16 +253,27 @@ div[data-testid="stMetricValue"] {
 @st.cache_data
 def load_data():
 
-    conn = sqlite3.connect("instagram_data.db")
+    try:
 
-    df = pd.read_sql(
-        "SELECT * FROM comments",
-        conn
-    )
+        conn = sqlite3.connect("instagram_data.db")
 
-    conn.close()
+        df = pd.read_sql(
+            "SELECT * FROM comments",
+            conn
+        )
 
-    return df
+        conn.close()
+
+        df['comment_date'] = pd.to_datetime(
+            df['comment_date'],
+            errors='coerce'
+        )
+
+        return df
+
+    except:
+
+        return pd.DataFrame()
 
 
 comments_all = load_data()
@@ -342,12 +352,12 @@ if analyze_clicked:
             ]
 
             result = comments_all[
-                comments_all['comment_text']
-                .astype(str)
-                .str.lower()
-                .apply(
+                comments_all['comment_text'].apply(
                     lambda x:
-                    any(k in x for k in keys)
+                    any(
+                        k in str(x).lower()
+                        for k in keys
+                    )
                 )
             ].copy()
 
@@ -387,21 +397,24 @@ if analyze_clicked:
         if result.empty:
 
             st.error("Ничего не найдено")
+            st.session_state['search_results'] = pd.DataFrame()
 
         else:
 
-            result['sentiment'] = analyze_sentiment(
-                result['comment_text'].tolist()
-            )
+            with st.spinner('ИИ анализирует данные...'):
 
-            result['theme'] = result[
-                'comment_text'
-            ].apply(classify_theme)
+                result['sentiment'] = analyze_sentiment(
+                    result['comment_text'].tolist()
+                )
 
-            result['priority'] = result.apply(
-                calculate_priority_score,
-                axis=1
-            )
+                result['theme'] = result[
+                    'comment_text'
+                ].apply(classify_theme)
+
+                result['priority'] = result.apply(
+                    calculate_priority_score,
+                    axis=1
+                )
 
             st.session_state['search_results'] = result
 
@@ -475,9 +488,10 @@ if not st.session_state['search_results'].empty:
 
     with c4:
 
-        avg_priority = round(
-            filtered['priority'].mean(),
-            1
+        avg_priority = (
+            round(filtered['priority'].mean(), 1)
+            if not filtered.empty
+            else 0
         )
 
         st.metric(
@@ -521,28 +535,30 @@ if not st.session_state['search_results'].empty:
 
         with g2:
 
-            text = " ".join(
-                filtered['comment_text']
-                .astype(str)
-            )
+            if len(filtered) > 0:
 
-            wc = WordCloud(
-                width=800,
-                height=400,
-                background_color=None,
-                mode="RGBA",
-                colormap="RdPu"
-            ).generate(text)
+                text = " ".join(
+                    filtered['comment_text']
+                    .astype(str)
+                )
 
-            fig_wc, ax = plt.subplots()
+                wc = WordCloud(
+                    width=800,
+                    height=400,
+                    background_color=None,
+                    mode="RGBA",
+                    colormap="RdPu"
+                ).generate(text)
 
-            ax.imshow(wc)
+                fig_wc, ax = plt.subplots()
 
-            ax.axis("off")
+                ax.imshow(wc)
 
-            fig_wc.patch.set_alpha(0)
+                ax.axis("off")
 
-            st.pyplot(fig_wc)
+                fig_wc.patch.set_alpha(0)
+
+                st.pyplot(fig_wc)
 
         theme_stats = (
             filtered['theme']
@@ -665,6 +681,7 @@ if not st.session_state['search_results'].empty:
             )
 
         show_df = table_df[[
+
             "comment_text",
             "comment_author",
             "comment_date",
@@ -726,15 +743,44 @@ if not st.session_state['search_results'].empty:
 
     with tab3:
 
-        insights = generate_insights(filtered)
+        neg_data = df_result[
+            df_result['sentiment'] == 'Негатив'
+        ]
 
-        for i in insights:
+        if not neg_data.empty:
+
+            count_bad = len(neg_data)
+
+            bad_topic = neg_data['theme'].mode()[0]
 
             st.markdown(f"""
             <div class='insight-box'>
-                {i}
+                ⚠️ <b>Внимание:</b> В результатах поиска обнаружено <b>{count_bad}</b> негативных сообщений.
+                Основная проблемная тема: <b>{bad_topic}</b>.
+                Требуется анализ рисков.
             </div>
             """, unsafe_allow_html=True)
+
+        else:
+
+            st.markdown("""
+            <div class='insight-box'>
+                ✅ <b>Положительный инсайт:</b> В данной выборке не обнаружено негативных проявлений.
+                Аудитория лояльна.
+            </div>
+            """, unsafe_allow_html=True)
+
+        insights = generate_insights(filtered)
+
+        if insights:
+
+            for i in insights:
+
+                st.markdown(f"""
+                <div class='insight-box'>
+                    {i}
+                </div>
+                """, unsafe_allow_html=True)
 
     csv = filtered.to_csv(
         index=False
